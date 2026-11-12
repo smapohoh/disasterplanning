@@ -38,3 +38,13 @@ GitHub Desktop에서 변경 확인 → Commit to main → Push origin.
 `main` Push 시 Vercel 자동 배포. Framework Vite / Build `npm run build` / Output `dist`.
 배포 주소: https://disasterplanning.vercel.app
 Hobby 플랜, 별도 환경 변수/API 키 불필요. Compass 인증 키는 개인 Codex 설정에만 있으며 제품에는 포함하지 않습니다.
+
+## 대시보드 · 재난 상태 · 오프라인 지도
+
+홈에서 구성원별 행동 계획과 입력률을 봅니다. ‘재난 상황 확인’을 켜면 안전/도움 필요/미확인 상태와 현재 계획 확인 여부를 별도로 기록합니다. 실제 다른 기기와 동기화되지는 않습니다.
+
+지도는 서울숲 주변 약 600m의 실제 OSM 벡터 데이터를 예시로 제공합니다. 기존 계획의 장소가 다르면 불일치를 표시합니다. 다른 주소를 자동으로 검색하거나 위치를 추적하지 않습니다.
+
+온라인에서 ‘지도 · 오프라인 저장’ → ‘이 지역 오프라인 저장’을 누르세요. 앱과 지도 저장 후 같은 브라우저·같은 주소에서 네트워크 없이 다시 열 수 있습니다. 브라우저 저장 공간 삭제/자동 정리 시 자료가 사라질 수 있습니다.
+
+프로덕션 빌드의 `scripts/create-sw.mjs`가 내용 해시 기반 서비스 워커를 생성합니다. Vite 개발 모드는 오프라인 저장을 제공하지 않으므로 `npm run build` → `npm run preview`로 검증하세요.

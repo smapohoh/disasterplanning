@@ -1,0 +1,7 @@
+import { readdir,readFile,writeFile } from 'node:fs/promises'
+import { createHash } from 'node:crypto'
+async function walk(dir){let out=[];for(const e of await readdir(dir,{withFileTypes:true})){const path=`${dir}/${e.name}`;if(e.isDirectory())out.push(...await walk(path));else if(!['sw.js'].includes(e.name))out.push(path)}return out}
+const files=await walk('dist');const hash=createHash('sha256');for(const f of files)hash.update(await readFile(f));const version=hash.digest('hex').slice(0,12)
+const urls=files.map(f=>f.slice(4));
+await writeFile('dist/sw.js',`const CACHE='moida-offline-${version}';const FILES=${JSON.stringify(urls)};self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting())));self.addEventListener('activate',event=>event.waitUntil(Promise.all([caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('moida-offline-')&&k!==CACHE).map(k=>caches.delete(k)))),self.clients.claim()])));self.addEventListener('fetch',event=>{const u=new URL(event.request.url);if(event.request.method!=='GET'||u.origin!==self.location.origin)return;if(event.request.mode==='navigate'){event.respondWith(caches.open(CACHE).then(async c=>(await c.match('/index.html'))||fetch(event.request)));return}event.respondWith(caches.open(CACHE).then(async c=>(await c.match(event.request,{ignoreVary:true}))||fetch(event.request)));});`)
+console.log('Offline shell generated:',version,urls.length,'resources')
