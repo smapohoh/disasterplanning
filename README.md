@@ -1,40 +1,40 @@
-# 안전한 내일 · Disaster Planning
+# 모이다 · 우리 가족 재난 약속
 
-개인용 재난 대비 체크리스트. 체크 상태는 브라우저 localStorage에만 저장됩니다.
+Compass 1.0.17 실제 모바일 앱 셸과 컴포넌트로 만든 React 모바일 웹 UI입니다.
 
-## 구조
-- `public/index.html`: 한국어 반응형 화면, 스타일, 체크리스트 동작
-- `vercel.json`: Vercel 정적 사이트 설정
+## 실행
 
-## 로컬 실행
-프로젝트 폴더에서 `python3 -m http.server 8000 --directory public` 실행 후 http://localhost:8000 접속.
+고정 폴더: `/Users/sunnie/Documents/Codex/Projects/disasterplanning`
 
-## Vercel
-- Framework Preset: Other
-- Root Directory: 저장소 루트
-- Build Command: 없음 (Override를 사용하는 경우 빈 값)
-- Output Directory: public
-- Install Command: 없음
-- 환경 변수: 필요 없음
-- 외부 라이브러리, 데이터베이스, 서버 함수 없음
+- 처음 설치: `npm ci`
+- 로컬 개발: `npm run dev` → http://localhost:3000
+- 배포 빌드: `npm run build`
+- 빌드 미리보기: `npm run preview` → http://localhost:3001
 
-개인 프로젝트의 Hobby 플랜 배포를 목표로 합니다. 실제 재난에서는 관계 기관의 최신 안내를 따르세요.
+Vite 포트가 사용 중이면 출력되는 주소를 사용하세요. 종료는 Ctrl+C.
 
-## 내 컴퓨터 개발 환경
+## 핵심 흐름
 
-- 고정 작업 폴더: `/Users/sunnie/Documents/Codex/Projects/disasterplanning`
-- 로컬 주소: http://localhost:3000
-- 배포 주소: https://disasterplanning.vercel.app
-- GitHub: https://github.com/smapohoh/disasterplanning
+1. 지금 할 일: 역할별 행동과 예시 만남 장소를 바로 확인
+2. 약속대로 움직여 보기 → 도착 표시 → 다음 행동과 가족별 계획 확인
+3. 우리 약속: 첫/대체 만남 장소, 연락 두절 약속, 구성원별 상황 수정
+4. 함께 확인: 각 역할로 직접 답하기 → 이해 확인 진행률 표시
+5. 약속 수정 시 이전 이해 확인 전체 초기화
 
-### 작업 순서
-1. Cursor 또는 Codex에서 이 프로젝트 폴더를 엽니다.
-2. 프로젝트 터미널에서 `npm run dev`를 실행합니다. 추가 패키지 설치는 필요 없습니다.
-3. `public/index.html`을 수정하고 저장한 뒤 로컬 브라우저를 새로고침합니다.
-4. GitHub Desktop에서 변경 내용을 확인하고 설명을 적어 **Commit to main**을 누릅니다.
-5. **Push origin**을 누르면 GitHub에 기록되고 Vercel이 자동 배포합니다.
-6. Vercel에서 배포 성공을 확인한 뒤 배포 주소를 새로고침합니다.
+입력/확인/연습 기록은 이 브라우저 localStorage에 저장됩니다. 실제 초대, 메시지 전송, 위치 추적, 공식 재난 알림, 다중 사용자 동기화, 검증된 대피소 정보는 제공하지 않는 UI 프로토타입입니다.
 
-로컬 수정이나 커밋만으로는 배포되지 않습니다. Push가 배포를 시작합니다.
-터미널 서버는 Ctrl+C로 종료합니다. `.env`와 인증 파일은 저장소에 올리지 않습니다.
-Hobby 플랜을 유지하며, 유료 기능 또는 플랜 전환은 별도 확인이 필요합니다.
+## 파일
+
+- `src/App.tsx`: 제품 화면과 상태/동작
+- `src/app.css`: 제품별 레이아웃
+- `src/foundations.css`: 공식 Compass 기본 토큰/스타일
+- `src/components/ui/`: 공식 Registry 컴포넌트
+- `docs/COMPASS-ADOPTION.md`: 버전, 출처, 적용 범위
+- `docs/first-checklist.html`: 이전 HTML 화면 보관
+
+## GitHub → Vercel
+
+GitHub Desktop에서 변경 확인 → Commit to main → Push origin.
+`main` Push 시 Vercel 자동 배포. Framework Vite / Build `npm run build` / Output `dist`.
+배포 주소: https://disasterplanning.vercel.app
+Hobby 플랜, 별도 환경 변수/API 키 불필요. Compass 인증 키는 개인 Codex 설정에만 있으며 제품에는 포함하지 않습니다.
