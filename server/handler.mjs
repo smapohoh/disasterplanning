@@ -16,7 +16,7 @@ async function limit(req){const key=hash(req.headers['x-forwarded-for']?.split('
 async function body(req){if(req.body!==undefined){const raw=typeof req.body==='string'?req.body:JSON.stringify(req.body);if(Buffer.byteLength(raw)>1000000)fail(413,'요청이 너무 커요.');try{return JSON.parse(raw)}catch{fail(400,'입력 내용을 확인해 주세요.')}}let raw='';for await(const chunk of req){raw+=chunk;if(Buffer.byteLength(raw)>1000000)fail(413,'계획 데이터가 너무 커요.')}try{return JSON.parse(raw||'{}')}catch{fail(400,'입력 내용을 확인해 주세요.')}}
 function clean(s,max){return typeof s==='string'?s.trim().slice(0,max):''}
 async function handle(req,res){res.setHeader('Cache-Control','no-store');res.setHeader('Content-Type','application/json; charset=utf-8');res.setHeader('X-Content-Type-Options','nosniff');const send=(value,status=200)=>({status,value});try{
- const url=new URL(req.url,'http://localhost'),path=url.pathname.split('/').filter(Boolean),method=req.method
+ const url=requestUrl(req),path=url.pathname.split('/').filter(Boolean),method=req.method
  if(!url.pathname.startsWith('/api/'))fail(404,'경로를 찾을 수 없어요.')
  if(method!=='GET'){const origin=req.headers.origin;if(!allowedOrigin(origin))fail(403,'허용되지 않은 요청이에요.');if(!req.headers['content-type']?.startsWith('application/json'))fail(415,'JSON 요청만 지원합니다.')}
  const b=method==='GET'?{}:await body(req)
@@ -73,11 +73,12 @@ async function handle(req,res){res.setHeader('Cache-Control','no-store');res.set
  fail(404,'요청한 기능을 찾을 수 없어요.')
  }catch(e){return send({error:e.status?e.message:'요청을 처리하지 못했어요. 다시 시도해 주세요.'},e.status||500)}}
 
+function requestUrl(req){const url=new URL(req.url,'http://localhost');const route=url.searchParams.get('__route')||req.query?.__route;if(typeof route==='string')url.pathname='/api/'+route;return url}
 function allowedOrigin(origin){
  if(!process.env.VERCEL)return /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin||'')
  return [process.env.MOIDA_PUBLIC_ORIGIN||'https://disasterplanning.vercel.app',process.env.VERCEL_URL&&'https://'+process.env.VERCEL_URL,process.env.VERCEL_BRANCH_URL&&'https://'+process.env.VERCEL_BRANCH_URL].includes(origin)
 }
 export default async function handler(req,res){
- try{await initialize();if(req.method==='POST'&&['/api/signup','/api/login'].includes(req.url.split('?')[0]))await withDatabase(true,async()=>{await limit(req);return {status:200}});const result=await withDatabase(req.method!=='GET',()=>handle(req,res));res.writeHead(result.status);res.end(JSON.stringify(result.value))}
+ try{await initialize();if(req.method==='POST'&&['/api/signup','/api/login'].includes(requestUrl(req).pathname))await withDatabase(true,async()=>{await limit(req);return {status:200}});const result=await withDatabase(req.method!=='GET',()=>handle(req,res));res.writeHead(result.status);res.end(JSON.stringify(result.value))}
  catch(e){console.error('Account request failed:',e.code||e.name);res.writeHead(503,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify({error:'계정 서버에 잠시 연결할 수 없어요. 다시 시도해 주세요.'}))}
 }

@@ -94,6 +94,6 @@ Hobby 플랜, 별도 환경 변수/API 키 불필요. Compass 인증 키는 개�
 
 ## Vercel Hobby 배포
 
-Vite 화면과 `api/[...path].js` 서버 함수를 함께 배포합니다. Node.js 24를 사용합니다. Turso Starter 무료 저장소를 프로젝트의 Production/Preview 환경에 연결하면 `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`이 서버 환경 변수로 주입됩니다. 키를 VITE_ 변수, 소스, 로그에 포함하지 마세요. 클라우드 환경에서는 로컬 파일 데이터베이스로 대체하지 않습니다.
+Vite 화면과 `api/index.js` 서버 함수를 함께 배포합니다. Node.js 24를 사용합니다. Turso Starter 무료 저장소를 프로젝트의 Production/Preview 환경에 연결하면 `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`이 서버 환경 변수로 주입됩니다. 키를 VITE_ 변수, 소스, 로그에 포함하지 마세요. 클라우드 환경에서는 로컬 파일 데이터베이스로 대체하지 않습니다.
 
 서버가 테이블을 처음 한 번 초기화합니다. 로컬 기록은 자동 업로드하지 않습니다. 같은 서비스 주소의 요청만 허용하며 배포 환경에서는 Secure/HttpOnly 세션 쿠키를 사용합니다. 쓰기 요청마다 데이터베이스 트랜잭션을 사용해 그룹 생성 한도와 버전 충돌을 검사합니다. 비밀 파일·계정 데이터는 Git에서 제외합니다.
