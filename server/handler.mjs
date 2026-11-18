@@ -75,6 +75,7 @@ async function handle(req,res){res.setHeader('Cache-Control','no-store');res.set
 
 function requestUrl(req){const url=new URL(req.url,'http://localhost');const route=url.searchParams.get('__route')||req.query?.__route;if(typeof route==='string')url.pathname='/api/'+route;return url}
 function allowedOrigin(origin){
+ if(!origin)return false
  if(!process.env.VERCEL)return /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin||'')
  return [process.env.MOIDA_PUBLIC_ORIGIN||'https://disasterplanning.vercel.app',process.env.VERCEL_URL&&'https://'+process.env.VERCEL_URL,process.env.VERCEL_BRANCH_URL&&'https://'+process.env.VERCEL_BRANCH_URL].includes(origin)
 }
