@@ -18,3 +18,11 @@ This version is a single-browser interactive prototype. Family role switching is
 - Only this fixed area is supported at present; changing the plan's text to another place does not silently relabel the map. A mismatch is shown until the user deliberately chooses the example place.
 - Service worker precaches versioned static app resources and this local map dataset. Save validates cached HTML and map, then stores a local copy of the vector extract. Clearing browser storage removes it. Navigations use the installed app shell; the worker checks for an updated bundle on subsequent online loads.
 - Offline restart tested by stopping the local production-preview origin, then reloading and opening/zooming the map. This verifies network-independent app/map loading for that browser origin; no claim about all phone browsers or persistence after browser storage eviction.
+
+## Local-only Aha revision
+
+The main experience now leads from personal plan entry to a reminder request, recipient review and requester-visible acknowledgement. Disaster execution/completion screens are removed from the primary experience. Incident safety status and offline map remain secondary tools.
+
+Manual reminder records include sender, recipient, plan revision, creation time and review completion time. Pending duplicates are prevented. Acknowledgement applies to pending requests for the same person and current plan revision. Changed plans exclude stale reminders and invalidate understanding. No external notification, scheduled task or multi-device delivery is implemented or implied. All reminder data stays in localStorage.
+
+This revision is local-only per user instruction. Do not push or deploy it without a new user instruction.

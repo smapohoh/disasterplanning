@@ -7,3 +7,19 @@ node_modules/
 *.log
 dist/
 *.tsbuildinfo
+
+.local/
+
+# Local state, credentials and verification artifacts
+*.sqlite
+*.sqlite-*
+*.db
+*.pem
+*.key
+*.p12
+*.pfx
+credentials*.json
+service-account*.json
+outputs/
+work/
+coverage/
