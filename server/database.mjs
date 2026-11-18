@@ -18,6 +18,7 @@ export function initialize(){return ready??=(async()=>{
  CREATE TABLE IF NOT EXISTS groups_data(id TEXT PRIMARY KEY,name TEXT NOT NULL,document TEXT NOT NULL,version INTEGER NOT NULL DEFAULT 1,created_by TEXT);
  CREATE TABLE IF NOT EXISTS memberships(group_id TEXT REFERENCES groups_data(id),user_id TEXT REFERENCES users(id),PRIMARY KEY(group_id,user_id));
  CREATE TABLE IF NOT EXISTS invites(token TEXT PRIMARY KEY,group_id TEXT REFERENCES groups_data(id),created_by TEXT NOT NULL,expires INTEGER NOT NULL);
+ CREATE TABLE IF NOT EXISTS imported_groups(owner_id TEXT NOT NULL,source_id TEXT NOT NULL,group_id TEXT NOT NULL REFERENCES groups_data(id),PRIMARY KEY(owner_id,source_id));
  CREATE TABLE IF NOT EXISTS auth_attempts(ip TEXT NOT NULL,window INTEGER NOT NULL,count INTEGER NOT NULL,PRIMARY KEY(ip,window));`)
  if(!(await db.prepare('PRAGMA table_info(groups_data)').all()).some(c=>c.name==='created_by')){await client.execute('ALTER TABLE groups_data ADD COLUMN created_by TEXT');for(const g of await db.prepare('SELECT id,document FROM groups_data').all()){const d=JSON.parse(g.document);await db.prepare('UPDATE groups_data SET created_by=? WHERE id=?').run(d.plan.members[0]?.id||d.plan.leaderId,g.id)}}
 })()}

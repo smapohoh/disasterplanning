@@ -1,4 +1,5 @@
 import {randomBytes,randomUUID,scryptSync,timingSafeEqual,createHash} from 'node:crypto'
+import {prepareImport} from './import-plan.mjs'
 import {db,initialize,withDatabase} from './database.mjs'
 const hash=s=>createHash('sha256').update(s).digest('hex')
 const token=()=>randomBytes(32).toString('base64url')
@@ -36,6 +37,17 @@ async function handle(req,res){res.setHeader('Cache-Control','no-store');res.set
  if(path[1]==='groups'&&!path[2]){
   if(method==='GET')return send({createdCount:(await db.prepare('SELECT COUNT(*) AS n FROM groups_data WHERE created_by=?').get(u.id)).n,groups:(await db.prepare('SELECT g.* FROM groups_data g JOIN memberships m ON g.id=m.group_id WHERE m.user_id=? ORDER BY g.rowid DESC').all(u.id)).map(g=>({id:g.id,name:g.name,count:JSON.parse(g.document).plan.members.length,leader:JSON.parse(g.document).plan.leaderId===u.id}))})
   if(method==='POST'){if((await db.prepare('SELECT COUNT(*) AS n FROM groups_data WHERE created_by=?').get(u.id)).n>=3)fail(409,'그룹은 계정당 최대 3개까지 만들 수 있어요.');const name=clean(b.name,40),place=clean(b.place,40);if(!name||!place)fail(400,'그룹 이름과 평소 장소를 입력해 주세요.');const id=randomUUID(),doc={plan:{leaderId:u.id,meeting:'만남 장소를 정해 주세요',address:'',backup:'',offline:'연락이 안 될 때의 약속을 함께 정해 주세요',revision:1,members:[{id:u.id,name:u.name,place,action:'',need:''}]},confirmed:{},phase:'ready'};(await db.prepare('INSERT INTO groups_data(id,name,document,version,created_by) VALUES(?,?,?,1,?)').run(id,name,JSON.stringify(doc),u.id));(await db.prepare('INSERT INTO memberships VALUES(?,?)').run(id,u.id));return send({id,name,document:doc,version:1},201)}
+ }
+ if(path[1]==='groups'&&path[2]==='import'&&method==='POST'){
+  const data=prepareImport(b,u)
+  const previous=await db.prepare('SELECT group_id FROM imported_groups WHERE owner_id=? AND source_id=?').get(u.id,data.sourceGroupId)
+  if(previous)return send({...await groupFor(previous.group_id,u.id),alreadyImported:true})
+  if((await db.prepare('SELECT COUNT(*) AS n FROM groups_data WHERE created_by=?').get(u.id)).n>=3)fail(409,'그룹은 최대 3개까지 만들 수 있어요. 가져오기는 기존 그룹을 덮어쓰지 않습니다.')
+  const id=randomUUID()
+  await db.prepare('INSERT INTO groups_data(id,name,document,version,created_by) VALUES(?,?,?,1,?)').run(id,data.name,JSON.stringify(data.document),u.id)
+  await db.prepare('INSERT INTO memberships VALUES(?,?)').run(id,u.id)
+  await db.prepare('INSERT INTO imported_groups VALUES(?,?,?)').run(u.id,data.sourceGroupId,id)
+  return send({id,name:data.name,document:data.document,version:1,alreadyImported:false},201)
  }
  if(path[1]==='groups'&&path[2]){
   const g=await groupFor(path[2],u.id)
