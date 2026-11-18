@@ -13,5 +13,10 @@
         }
       ]
     }
-  ]
+  ],
+  "functions": {
+    "api/[...path].js": {
+      "maxDuration": 30
+    }
+  }
 }
