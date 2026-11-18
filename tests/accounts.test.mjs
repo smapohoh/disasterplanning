@@ -1,15 +1,23 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {spawn} from 'node:child_process'
 import {mkdtemp,rm,readFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
-import {once} from 'node:events'
-const dir=await mkdtemp(join(tmpdir(),'moida-accounts-')),port=3139,base='http://127.0.0.1:'+port
-const child=spawn(process.execPath,['server/index.mjs'],{env:{...process.env,MOIDA_DB:join(dir,'test.sqlite'),MOIDA_PORT:String(port)},stdio:['ignore','pipe','pipe']})
-await Promise.race([once(child.stdout,'data'),once(child,'exit').then(()=>{throw new Error('server failed to start')})])
+const dir=await mkdtemp(join(tmpdir(),'moida-accounts-')),base='http://127.0.0.1:3139'
+process.env.MOIDA_DB=join(dir,'test.sqlite')
+// Exercise the same parsed-body entry point used by Vercel without opening a network port.
+const {default:handler}=await import('../server/handler.mjs')
+const {closeDatabase}=await import('../server/database.mjs')
 const cookies={}
-async function req(path,method='GET',body,as){const res=await fetch(base+'/api/'+path,{method,headers:{Origin:base,...(body?{'Content-Type':'application/json'}:{}),...(cookies[as]?{Cookie:cookies[as]}:{})},body:body?JSON.stringify(body):undefined});const cookie=res.headers.get('set-cookie');if(cookie&&as)cookies[as]=cookie.split(';')[0];return {status:res.status,data:await res.json()}}
+async function req(path,method='GET',body,as){
+ const headers={origin:base,...(body?{'content-type':'application/json'}:{}),...(cookies[as]?{cookie:cookies[as]}:{})}
+ const responseHeaders={};let status=200,result
+ const res={setHeader(k,v){responseHeaders[k.toLowerCase()]=v},writeHead(code){status=code},end(text){result=JSON.parse(text)}}
+ await handler({url:'/api/'+path,method,headers,body,socket:{remoteAddress:'127.0.0.1'}},res)
+ const cookie=responseHeaders['set-cookie'];if(cookie&&as)cookies[as]=cookie.split(';')[0]
+ return {status,data:result}
+}
+
 try{
 await test('account, group, invitation and server authorization lifecycle',async t=>{
  let a,b,g,invite
@@ -22,4 +30,4 @@ await test('account, group, invitation and server authorization lifecycle',async
  await t.test('creation limit is three per creator and survives transfer; joined groups do not consume slots',async()=>{for(let i=0;i<2;i++){assert.equal((await req('groups','POST',{name:'추가 그룹 '+i,place:'집'},'a')).status,201)}assert.equal((await req('groups','GET',undefined,'a')).data.createdCount,3);assert.equal((await req('groups','POST',{name:'네 번째 그룹',place:'집'},'a')).status,409);const foreign=(await req('groups','POST',{name:'초대받을 그룹',place:'학교'},'b')).data;const link=(await req('groups/'+foreign.id+'/invites','POST',{},'b')).data.token;assert.equal((await req('invites/'+link+'/join','POST',{place:'집'},'a')).status,200);const listed=(await req('groups','GET',undefined,'a')).data;assert.equal(listed.createdCount,3);assert.equal(listed.groups.length,4)})
  await t.test('logout invalidates session; password is never stored in plaintext',async()=>{assert.equal((await req('logout','POST',{},'a')).status,200);assert.equal((await req('me','GET',undefined,'a')).status,401);assert.equal((await req('login','POST',{email:'leader@example.test',password:'wrong-password-2026!'},'a')).status,401);assert.equal((await req('login','POST',{email:'leader@example.test',password:'Local-test-pass-2026!'},'a')).status,200);const bytes=await readFile(join(dir,'test.sqlite-wal'));assert.equal(bytes.includes(Buffer.from('Local-test-pass-2026!')),false)})
 })
-}finally{child.kill();await once(child,'exit');await rm(dir,{recursive:true,force:true})}
+}finally{closeDatabase();await rm(dir,{recursive:true,force:true})}

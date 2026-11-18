@@ -12,6 +12,19 @@
           "value": "no-cache, no-store, must-revalidate"
         }
       ]
+    },
+    {
+      "source": "/auth/confirm",
+      "headers": [
+        {
+          "key": "Referrer-Policy",
+          "value": "no-referrer"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
     }
   ],
   "functions": {
@@ -23,6 +36,10 @@
     {
       "source": "/api/:path*",
       "destination": "/api?__route=:path*"
+    },
+    {
+      "source": "/auth/confirm",
+      "destination": "/index.html"
     }
   ]
 }

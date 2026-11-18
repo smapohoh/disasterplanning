@@ -1,5 +1,13 @@
 # 모이다 · 우리 가족 재난 약속
 
+## Supabase 이메일 인증
+
+Supabase Connect의 React/Vite URL과 Publishable key를 `.env.local` 및 Vercel Production의 `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`로 설정합니다. Publishable key는 브라우저용이며 서비스 역할 키나 DB 비밀번호는 코드에 넣지 않습니다. `npm run server`는 로컬 `.env.local`을 읽습니다.
+
+회원가입 후 확인 메일의 링크로 이메일을 인증합니다. 기본 메일의 ConfirmationURL과 PKCE를 사용합니다. Site URL은 `https://disasterplanning.vercel.app`, 실제 인증 복귀 경로는 `/auth/confirm`입니다. SDK가 세션을 보관하고 자동 갱신하며, 로그아웃은 현재 기기의 세션을 종료합니다.
+
+서버는 Bearer 토큰을 Supabase getUser로 검증하고 이메일 확인 여부를 검사합니다. 인증된 같은 이메일의 기존 내부 계정에 연결하므로 기존 그룹과 권한을 유지합니다. Supabase가 설정된 배포에서는 이전 비밀번호·쿠키 로그인 경로를 사용하지 않습니다. 실제 가입과 메일 발송은 사용자 최종 실습에서 진행합니다. Free 기본 메일의 문구 편집은 Pro 또는 별도 SMTP 연결을 요구하므로 기본 템플릿을 유지합니다.
+
 Compass 1.0.17 실제 모바일 앱 셸과 컴포넌트로 만든 React 모바일 웹 UI입니다.
 
 ## 실행

@@ -14,6 +14,7 @@ export function initialize(){return ready??=(async()=>{
  if(!remote)await client.execute('PRAGMA journal_mode=WAL')
  await client.executeMultiple(`
  CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY,name TEXT NOT NULL,email TEXT UNIQUE NOT NULL,password TEXT NOT NULL);
+ CREATE TABLE IF NOT EXISTS auth_identities(provider_id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id));
  CREATE TABLE IF NOT EXISTS sessions(token TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),expires INTEGER NOT NULL);
  CREATE TABLE IF NOT EXISTS groups_data(id TEXT PRIMARY KEY,name TEXT NOT NULL,document TEXT NOT NULL,version INTEGER NOT NULL DEFAULT 1,created_by TEXT);
  CREATE TABLE IF NOT EXISTS memberships(group_id TEXT REFERENCES groups_data(id),user_id TEXT REFERENCES users(id),PRIMARY KEY(group_id,user_id));
@@ -27,3 +28,5 @@ export async function withDatabase(write,fn){
  const tx=await client.transaction('write')
  try{const result=await context.run(tx,fn);if(result.status>=400)await tx.rollback();else await tx.commit();return result}finally{tx.close()}
 }
+
+export function closeDatabase(){client.close()}

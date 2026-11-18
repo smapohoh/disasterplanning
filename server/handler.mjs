@@ -1,14 +1,15 @@
 import {randomBytes,randomUUID,scryptSync,timingSafeEqual,createHash} from 'node:crypto'
+import {usesSupabase,supabaseUser} from './supabase-auth.mjs'
 import {prepareImport} from './import-plan.mjs'
 import {db,initialize,withDatabase} from './database.mjs'
 const hash=s=>createHash('sha256').update(s).digest('hex')
 const token=()=>randomBytes(32).toString('base64url')
 const sessionMs=1000*60*60*24*7
 function password(value,salt=randomBytes(16).toString('hex')){return salt+':'+scryptSync(value,salt,64).toString('hex')}
-function matches(value,stored){const actual=password(value,stored.split(':')[0]);return timingSafeEqual(Buffer.from(actual),Buffer.from(stored))}
+function matches(value,stored){if(!stored?.includes(':'))return false;const actual=password(value,stored.split(':')[0]);return timingSafeEqual(Buffer.from(actual),Buffer.from(stored))}
 const safeUser=u=>({id:u.id,name:u.name,email:u.email})
 function fail(status,message){throw Object.assign(new Error(message),{status})}
-async function user(req){const raw=req.headers.cookie?.match(/(?:^|;\s*)moida_session=([^;]+)/)?.[1];const u=raw&&(await db.prepare('SELECT u.* FROM users u JOIN sessions s ON s.user_id=u.id WHERE s.token=? AND s.expires>?').get(hash(raw),Date.now()));if(!u)fail(401,'로그인이 필요해요.');return safeUser(u)}
+async function user(req){if(usesSupabase)return supabaseUser(req);const raw=req.headers.cookie?.match(/(?:^|;\s*)moida_session=([^;]+)/)?.[1];const u=raw&&(await db.prepare('SELECT u.* FROM users u JOIN sessions s ON s.user_id=u.id WHERE s.token=? AND s.expires>?').get(hash(raw),Date.now()));if(!u)fail(401,'로그인이 필요해요.');return safeUser(u)}
 async function groupFor(id,uid){const row=(await db.prepare('SELECT g.* FROM groups_data g JOIN memberships m ON g.id=m.group_id WHERE g.id=? AND m.user_id=?').get(id,uid));if(!row)fail(404,'참여한 그룹을 찾을 수 없어요.');return {...row,document:JSON.parse(row.document)}}
 function leader(g,uid){if(g.document.plan.leaderId!==uid)fail(403,'대표만 할 수 있어요.')}
 async function write(g,doc){(await db.prepare('UPDATE groups_data SET document=?,version=version+1 WHERE id=?').run(JSON.stringify(doc),g.id));return {id:g.id,name:g.name,document:doc,version:g.version+1}}
@@ -22,6 +23,7 @@ async function handle(req,res){res.setHeader('Cache-Control','no-store');res.set
  if(method!=='GET'){const origin=req.headers.origin;if(!allowedOrigin(origin))fail(403,'허용되지 않은 요청이에요.');if(!req.headers['content-type']?.startsWith('application/json'))fail(415,'JSON 요청만 지원합니다.')}
  const b=method==='GET'?{}:await body(req)
  if(path[1]==='signup'||path[1]==='login'){
+  if(usesSupabase)fail(410,'이메일 인증 로그인 화면을 이용해 주세요.')
   if(method!=='POST')fail(405,'허용되지 않은 요청이에요.');
   const email=clean(b.email,254).toLowerCase(),pass=typeof b.password==='string'?b.password:''
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||pass.length<10||pass.length>128)fail(400,'이메일과 10~128자 비밀번호를 확인해 주세요.')
